@@ -12,7 +12,7 @@ if __name__ == '__main__':
     parser.add_argument('--test_times', type=int, default=20)
     args = parser.parse_args()
     net = MobileNetV2(n_class=27)
-    net.load_state_dict(torch.load("mobilenetv2_jester_online.pth.tar"))
+    net.load_state_dict(torch.load("models/pytorch/mobilenetv2_jester_online.pth.tar"))
     x = torch.ones([1, 3, 224, 224])
     shift_buffer = [torch.zeros([1, 3, 56, 56]),
                     torch.zeros([1, 4, 28, 28]),

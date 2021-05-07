@@ -1,5 +1,6 @@
 import argparse
 import io
+import os
 
 import onnx
 import torch
@@ -8,6 +9,8 @@ from mobilenet_v2_tsm import MobileNetV2
 
 
 def export_onnx(model, inputs, args):
+    save_dir = os.path.dirname(args.output_path)
+    os.makedirs(save_dir, exist_ok=True)
     model.eval()
     input_names = []
     input_shapes = {}
