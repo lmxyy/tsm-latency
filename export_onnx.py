@@ -1,11 +1,13 @@
 import argparse
+import io
 
+import onnx
 import torch
 
 from mobilenet_v2_tsm import MobileNetV2
 
 
-def export_onnx(model, inputs, output_path):
+def export_onnx(model, inputs, args):
     model.eval()
     input_names = []
     input_shapes = {}
@@ -14,8 +16,19 @@ def export_onnx(model, inputs, output_path):
             name = "i" + str(index)
             input_names.append(name)
             input_shapes[name] = torch_input.shape
-        torch.onnx.export(model, inputs, output_path, input_names=input_names,
-                          output_names=["o" + str(i) for i in range(len(inputs))], opset_version=10)
+        if args.simplify:
+            from onnxsim import simplify
+            buffer = io.BytesIO()
+            torch.onnx.export(model, inputs, buffer, input_names=input_names,
+                              output_names=["o" + str(i) for i in range(len(inputs))], opset_version=10)
+            buffer.seek(0, 0)
+            onnx_model = onnx.load_model(buffer)
+            onnx_model, success = simplify(onnx_model)
+            assert success
+            onnx.save(onnx_model, args.output_path)
+        else:
+            torch.onnx.export(model, inputs, args.output_path, input_names=input_names,
+                              output_names=["o" + str(i) for i in range(len(inputs))], opset_version=10)
 
 
 if __name__ == '__main__':
@@ -36,4 +49,4 @@ if __name__ == '__main__':
               torch.zeros([1, 12, 14, 14]),
               torch.zeros([1, 20, 7, 7]),
               torch.zeros([1, 20, 7, 7]))
-    export_onnx(model, inputs, args.output_path)
+    export_onnx(model, inputs, args)
